@@ -1,0 +1,35 @@
+{
+  "name": "@dragonball/api",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "nest start --watch",
+    "build": "nest build",
+    "start": "node dist/main",
+    "lint": "tsc --noEmit",
+    "test": "echo 'no tests'",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@dragonball/game-core": "file:../../packages/game-core",
+    "@dragonball/shared": "file:../../packages/shared",
+    "@nestjs/common": "^10.4.15",
+    "@nestjs/core": "^10.4.15",
+    "@nestjs/platform-socket.io": "^10.4.15",
+    "@nestjs/websockets": "^10.4.15",
+    "@prisma/client": "^6.4.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.4.9",
+    "@nestjs/schematics": "^10.2.3",
+    "@nestjs/testing": "^10.4.15",
+    "@types/node": "^22.13.4",
+    "prisma": "^6.4.1",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "~5.7.2"
+  }
+}
