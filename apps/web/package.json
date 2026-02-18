@@ -11,8 +11,8 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@dragonball/game-core": "workspace:*",
-    "@dragonball/shared": "workspace:*",
+    "@dragonball/game-core": "file:../../packages/game-core",
+    "@dragonball/shared": "file:../../packages/shared",
     "framer-motion": "^12.4.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

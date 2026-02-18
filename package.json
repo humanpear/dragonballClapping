@@ -5,8 +5,12 @@
   "packageManager": "pnpm@10.5.2",
   "scripts": {
     "dev": "pnpm --parallel --filter @dragonball/web --filter @dragonball/api dev",
-    "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
-    "test": "pnpm -r test"
-  }
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
 }
