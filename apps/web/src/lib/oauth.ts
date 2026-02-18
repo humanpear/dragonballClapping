@@ -52,7 +52,9 @@ function loadScript(src: string): Promise<void> {
 export async function loginWithGoogle(): Promise<{ provider: AuthProvider; accessToken: string }> {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
   if (!clientId) {
-    throw new Error('VITE_GOOGLE_CLIENT_ID is not configured.');
+    throw new Error(
+      'VITE_GOOGLE_CLIENT_ID is not configured. Set apps/web/.env (or .env.local) and restart the dev server.'
+    );
   }
 
   await loadScript(GOOGLE_SDK_URL);
@@ -82,7 +84,9 @@ export async function loginWithGoogle(): Promise<{ provider: AuthProvider; acces
 export async function loginWithKakao(): Promise<{ provider: AuthProvider; accessToken: string }> {
   const appKey = import.meta.env.VITE_KAKAO_JS_KEY;
   if (!appKey) {
-    throw new Error('VITE_KAKAO_JS_KEY is not configured.');
+    throw new Error(
+      'VITE_KAKAO_JS_KEY is not configured. Set apps/web/.env (or .env.local) and restart the dev server.'
+    );
   }
 
   await loadScript(KAKAO_SDK_URL);
