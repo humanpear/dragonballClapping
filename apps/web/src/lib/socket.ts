@@ -1,3 +1,113 @@
-import { io } from 'socket.io-client';
+import type { ResolvedEvent, TurnWindow } from '@dragonball/shared';
 
-export const socket = io('http://localhost:3000', { autoConnect: true });
+type MatchStartedPayload = { matchId: string };
+type MatchEndedPayload = { winner: string };
+
+type SocketEventMap = {
+  'match:started': MatchStartedPayload;
+  'match:turn-window': TurnWindow;
+  'match:resolved': ResolvedEvent;
+  'match:ended': MatchEndedPayload;
+};
+
+type EventName = keyof SocketEventMap;
+type Handler<T> = (payload: T) => void;
+
+type SocketLike = {
+  on: <T extends EventName>(event: T, handler: Handler<SocketEventMap[T]>) => void;
+  emit: (event: string, payload?: unknown) => void;
+};
+
+declare global {
+  interface Window {
+    io?: (url: string, options?: { autoConnect?: boolean }) => {
+      on: (event: string, handler: (payload: unknown) => void) => void;
+      emit: (event: string, payload?: unknown) => void;
+    };
+  }
+}
+
+const SOCKET_SERVER_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+const SOCKET_IO_SCRIPT_URL = `${SOCKET_SERVER_URL}/socket.io/socket.io.js`;
+
+const handlers: { [K in EventName]?: Array<Handler<SocketEventMap[K]>> } = {};
+let realSocket: ReturnType<NonNullable<Window['io']>> | null = null;
+let scriptLoadingPromise: Promise<void> | null = null;
+
+function loadSocketIoScript(): Promise<void> {
+  if (window.io) return Promise.resolve();
+  if (scriptLoadingPromise) return scriptLoadingPromise;
+
+  scriptLoadingPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${SOCKET_IO_SCRIPT_URL}"]`);
+    if (existing) {
+      if (window.io) {
+        resolve();
+        return;
+      }
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Failed to load Socket.IO client script.')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = SOCKET_IO_SCRIPT_URL;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Socket.IO client script.'));
+    document.head.appendChild(script);
+  });
+
+  return scriptLoadingPromise;
+}
+
+function bindBufferedHandlers() {
+  if (!realSocket) return;
+
+  (Object.keys(handlers) as EventName[]).forEach((event) => {
+    const eventHandlers = handlers[event];
+    if (!eventHandlers?.length) return;
+
+    eventHandlers.forEach((handler) => {
+      realSocket!.on(event, (payload) => {
+        handler(payload as SocketEventMap[typeof event]);
+      });
+    });
+  });
+}
+
+async function initializeSocket() {
+  try {
+    await loadSocketIoScript();
+
+    if (!window.io) {
+      throw new Error('Socket.IO global is unavailable after script load.');
+    }
+
+    realSocket = window.io(SOCKET_SERVER_URL, { autoConnect: true });
+    bindBufferedHandlers();
+  } catch (error) {
+    console.warn('[socket] running in offline mode:', error);
+  }
+}
+
+void initializeSocket();
+
+export const socket: SocketLike = {
+  on: (event, handler) => {
+    handlers[event] = [...(handlers[event] ?? []), handler] as Array<Handler<SocketEventMap[typeof event]>>;
+
+    if (realSocket) {
+      realSocket.on(event, (payload) => handler(payload as SocketEventMap[typeof event]));
+    }
+  },
+  emit: (event, payload) => {
+    if (!realSocket) {
+      console.warn(`[socket] emit skipped before connection: ${event}`);
+      return;
+    }
+
+    realSocket.emit(event, payload);
+  }
+};
