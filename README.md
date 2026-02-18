@@ -9,6 +9,21 @@ npm install
 npm run dev
 ```
 
+## SNS 로그인 환경변수 설정
+
+SNS 로그인을 사용하려면 프로젝트 루트에 `.env` 파일을 만들고 아래 값을 설정해주세요.
+
+```bash
+cp .env.example .env
+```
+
+```env
+VITE_KAKAO_CLIENT_ID=
+VITE_KAKAO_REDIRECT_URI=
+VITE_GOOGLE_CLIENT_ID=
+VITE_GOOGLE_REDIRECT_URI=
+```
+
 ## 구현 범위
 
 - 홈(카카오/구글 로그인 버튼, 시작 버튼)
