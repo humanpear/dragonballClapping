@@ -30,7 +30,13 @@ declare global {
 const SOCKET_SERVER_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 const SOCKET_IO_SCRIPT_URL = `${SOCKET_SERVER_URL}/socket.io/socket.io.js`;
 
-const handlers: { [K in EventName]?: Array<Handler<SocketEventMap[K]>> } = {};
+const handlers: { [K in EventName]: Array<Handler<SocketEventMap[K]>> } = {
+  'match:started': [],
+  'match:turn-window': [],
+  'match:resolved': [],
+  'match:ended': []
+};
+
 let realSocket: ReturnType<NonNullable<Window['io']>> | null = null;
 let scriptLoadingPromise: Promise<void> | null = null;
 
@@ -62,19 +68,21 @@ function loadSocketIoScript(): Promise<void> {
   return scriptLoadingPromise;
 }
 
-function bindBufferedHandlers() {
+function bindEventHandlers<T extends EventName>(event: T) {
   if (!realSocket) return;
 
-  (Object.keys(handlers) as EventName[]).forEach((event) => {
-    const eventHandlers = handlers[event];
-    if (!eventHandlers?.length) return;
-
-    eventHandlers.forEach((handler) => {
-      realSocket!.on(event, (payload) => {
-        handler(payload as SocketEventMap[typeof event]);
-      });
+  handlers[event].forEach((handler) => {
+    realSocket!.on(event, (payload) => {
+      handler(payload as SocketEventMap[T]);
     });
   });
+}
+
+function bindBufferedHandlers() {
+  bindEventHandlers('match:started');
+  bindEventHandlers('match:turn-window');
+  bindEventHandlers('match:resolved');
+  bindEventHandlers('match:ended');
 }
 
 async function initializeSocket() {
@@ -96,10 +104,12 @@ void initializeSocket();
 
 export const socket: SocketLike = {
   on: (event, handler) => {
-    handlers[event] = [...(handlers[event] ?? []), handler] as Array<Handler<SocketEventMap[typeof event]>>;
+    handlers[event].push(handler);
 
     if (realSocket) {
-      realSocket.on(event, (payload) => handler(payload as SocketEventMap[typeof event]));
+      realSocket.on(event, (payload) => {
+        handler(payload as SocketEventMap[typeof event]);
+      });
     }
   },
   emit: (event, payload) => {
