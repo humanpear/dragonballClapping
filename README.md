@@ -19,11 +19,16 @@ pnpm dev
 `apps/api/.env`에 `DATABASE_URL`을 넣고 Prisma를 사용합니다.
 
 ## OAuth 설정 (Web)
-`apps/web/.env` 파일에 아래 값을 설정하면 실제 OAuth 로그인으로 동작합니다.
+`apps/web/.env.example`을 복사해서 `apps/web/.env.local`(또는 `.env`) 파일을 만든 뒤 값을 채우면 실제 OAuth 로그인으로 동작합니다.
+
+```bash
+cp apps/web/.env.example apps/web/.env.local
+```
 
 ```bash
 VITE_GOOGLE_CLIENT_ID=your_google_oauth_client_id
 VITE_KAKAO_JS_KEY=your_kakao_javascript_key
 ```
 
-값이 없으면 로그인 버튼 클릭 시 에러 메시지가 표시됩니다.
+환경변수를 추가/수정했다면 Vite dev server를 재시작해야 반영됩니다.
+값이 없으면 OAuth 버튼이 비활성화되고, 개발용 Mock 로그인만 사용할 수 있습니다.
