@@ -1,4 +1,6 @@
 import type { ResolvedEvent, TurnWindow } from '@dragonball/shared';
+import { createCpuPolicyAction, createTurnWindow, resolveTurn, type FighterState } from '@dragonball/game-core';
+import type { PlayerAction } from '@dragonball/shared';
 
 type MatchStartedPayload = { matchId: string };
 type MatchEndedPayload = { winner: string; roundWins?: { p1: number; p2: number } };
@@ -21,6 +23,17 @@ type SocketLike = {
 
 type PendingEmit = { event: string; payload?: unknown };
 
+type LocalMatchState = {
+  matchId: string;
+  turnIndex: number;
+  p1: FighterState;
+  p2: FighterState;
+  roundWins: { p1: number; p2: number };
+  p1Input: { beat1?: PlayerAction; beat2?: PlayerAction };
+  window: TurnWindow;
+  timerId?: number;
+};
+
 declare global {
   interface Window {
     io?: (url: string, options?: { autoConnect?: boolean }) => {
@@ -41,8 +54,93 @@ const handlers: { [K in EventName]: Array<Handler<SocketEventMap[K]>> } = {
 };
 
 let realSocket: ReturnType<NonNullable<Window['io']>> | null = null;
+let useLocalFallback = false;
+let localMatch: LocalMatchState | null = null;
 let scriptLoadingPromise: Promise<void> | null = null;
 const pendingEmits: PendingEmit[] = [];
+
+function emitToHandlers<T extends EventName>(event: T, payload: SocketEventMap[T]) {
+  handlers[event].forEach((handler) => {
+    handler(payload);
+  });
+}
+
+function clearLocalTimer() {
+  if (localMatch?.timerId) {
+    window.clearTimeout(localMatch.timerId);
+  }
+}
+
+function runLocalTurn(match: LocalMatchState) {
+  const turnWindow = createTurnWindow(match.turnIndex, Date.now());
+  match.window = turnWindow;
+  emitToHandlers('match:turn-window', { ...turnWindow, roundWins: match.roundWins });
+
+  clearLocalTimer();
+  match.timerId = window.setTimeout(() => {
+    if (!localMatch || localMatch.matchId !== match.matchId) return;
+
+    const p2Input = {
+      beat1: createCpuPolicyAction(match.turnIndex),
+      beat2: createCpuPolicyAction(match.turnIndex + 1)
+    };
+
+    const resolved = resolveTurn(
+      match.turnIndex,
+      { beat1: match.p1Input.beat1 ?? 'NONE', beat2: match.p1Input.beat2 ?? 'NONE' },
+      p2Input,
+      match.p1,
+      match.p2,
+      match.roundWins
+    );
+
+    match.p1 = resolved.p1After;
+    match.p2 = resolved.p2After;
+    match.roundWins = resolved.roundWins;
+    emitToHandlers('match:resolved', resolved.event);
+
+    if (match.roundWins.p1 >= 3 || match.roundWins.p2 >= 3 || match.turnIndex >= 11) {
+      emitToHandlers('match:ended', {
+        winner: match.roundWins.p1 === match.roundWins.p2 ? 'draw' : match.roundWins.p1 > match.roundWins.p2 ? 'player' : 'cpu',
+        roundWins: match.roundWins
+      });
+      localMatch = null;
+      return;
+    }
+
+    match.turnIndex += 1;
+    match.p1Input = {};
+    runLocalTurn(match);
+  }, Math.max(0, turnWindow.lockInTs - Date.now()));
+}
+
+function handleLocalEmit(event: string, payload?: unknown) {
+  if (event === 'match:start-vs-cpu') {
+    const match: LocalMatchState = {
+      matchId: `local-${Date.now()}`,
+      turnIndex: 0,
+      p1: { hp: 100, ki: 0 },
+      p2: { hp: 100, ki: 0 },
+      roundWins: { p1: 0, p2: 0 },
+      p1Input: {},
+      window: createTurnWindow(0, Date.now())
+    };
+    localMatch = match;
+    emitToHandlers('match:started', { matchId: match.matchId });
+    runLocalTurn(match);
+    return;
+  }
+
+  if (event === 'match:submit-input' && localMatch && payload && typeof payload === 'object') {
+    const input = payload as { matchId?: string; beat?: 1 | 2; action?: PlayerAction; turnIndex?: number };
+    if (input.matchId !== localMatch.matchId || input.turnIndex !== localMatch.turnIndex) return;
+    if (!input.beat || !input.action) return;
+    if (Date.now() >= localMatch.window.inputCloseTs) return;
+
+    if (input.beat === 1) localMatch.p1Input.beat1 = input.action;
+    if (input.beat === 2) localMatch.p1Input.beat2 = input.action;
+  }
+}
 
 function flushPendingEmits() {
   if (!realSocket || pendingEmits.length === 0) return;
@@ -118,6 +216,7 @@ async function initializeSocket() {
     flushPendingEmits();
   } catch (error) {
     console.warn('[socket] running in offline mode:', error);
+    useLocalFallback = true;
   }
 }
 
@@ -137,6 +236,11 @@ export const socket: SocketLike = {
     handlers[event] = [];
   },
   emit: (event, payload) => {
+    if (useLocalFallback) {
+      handleLocalEmit(event, payload);
+      return;
+    }
+
     if (!realSocket) {
       pendingEmits.push({ event, payload });
       return;
