@@ -13,6 +13,10 @@ export function LoginScreen() {
 
   const handleGoogleLogin = async () => {
     setErrorMessage(null);
+    if (!hasGoogleClientId) {
+      loginMock('google');
+      return;
+    }
     setLoadingProvider('google');
     try {
       const result = await loginWithGoogle();
@@ -26,6 +30,10 @@ export function LoginScreen() {
 
   const handleKakaoLogin = async () => {
     setErrorMessage(null);
+    if (!hasKakaoJsKey) {
+      loginMock('kakao');
+      return;
+    }
     setLoadingProvider('kakao');
     try {
       const result = await loginWithKakao();
@@ -47,10 +55,10 @@ export function LoginScreen() {
 
         <div className="db-scroll w-full rounded-3xl p-5 shadow-xl">
           <h2 className="mb-4 text-center text-2xl font-extrabold">로그인</h2>
-          <button className="oauth-kakao" onClick={handleKakaoLogin} disabled={loadingProvider !== null || !hasKakaoJsKey}>
+          <button className="oauth-kakao" onClick={handleKakaoLogin} disabled={loadingProvider !== null}>
             {loadingProvider === 'kakao' ? '카카오 로그인 중...' : '카카오 계정으로 로그인'}
           </button>
-          <button className="oauth-google mt-3" onClick={handleGoogleLogin} disabled={loadingProvider !== null || !hasGoogleClientId}>
+          <button className="oauth-google mt-3" onClick={handleGoogleLogin} disabled={loadingProvider !== null}>
             {loadingProvider === 'google' ? '구글 로그인 중...' : '구글 계정으로 로그인'}
           </button>
 
