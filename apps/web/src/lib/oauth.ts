@@ -33,9 +33,15 @@ const KAKAO_SDK_URL = 'https://t1.kakaocdn.net/kakao_js_sdk/2.7.5/kakao.min.js';
 
 function loadScript(src: string): Promise<void> {
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
     if (existing) {
-      resolve();
+      if (existing.dataset.loaded === 'true') {
+        resolve();
+        return;
+      }
+
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error(`Failed to load SDK script: ${src}`)), { once: true });
       return;
     }
 
@@ -43,7 +49,10 @@ function loadScript(src: string): Promise<void> {
     script.src = src;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      script.dataset.loaded = 'true';
+      resolve();
+    };
     script.onerror = () => reject(new Error(`Failed to load SDK script: ${src}`));
     document.head.appendChild(script);
   });
