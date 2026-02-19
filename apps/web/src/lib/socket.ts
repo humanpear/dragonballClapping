@@ -86,6 +86,10 @@ function bindBufferedHandlers() {
 }
 
 async function initializeSocket() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return;
+  }
+
   try {
     await loadSocketIoScript();
 
