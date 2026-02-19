@@ -3,10 +3,91 @@
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Pretendard', Inter, system-ui, sans-serif;
 }
 
 body {
   margin: 0;
   min-width: 320px;
+}
+
+.db-bg {
+  background: radial-gradient(circle at top, #58bfff, #1f7ec9 50%, #f4a259 90%);
+}
+
+.battle-bg {
+  background: linear-gradient(180deg, #3bb3ff 0%, #6ec9ff 35%, #9edc8e 100%);
+}
+
+.db-title {
+  letter-spacing: 0.06em;
+  text-shadow: 3px 3px 0 #1f2937;
+}
+
+.db-scroll {
+  background: #f5e9d0;
+  border: 3px solid #3b2f2f;
+}
+
+.oauth-kakao,
+.oauth-google {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 2px solid #222;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+}
+
+.oauth-kakao {
+  background: #fee500;
+}
+
+.oauth-google {
+  background: #ffffff;
+}
+
+.start-btn {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 3px solid #b45309;
+  background: linear-gradient(180deg, #ffcf4a 0%, #ff9f1c 100%);
+  padding: 0.8rem 1rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 1px 1px 0 #7c2d12;
+}
+
+.mode-card {
+  min-height: 140px;
+  border-radius: 1rem;
+  border: 4px solid #1f2937;
+  background: #f4e9c9;
+  padding: 1rem;
+  text-align: center;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 999px;
+  border: 2px solid #111827;
+  padding: 0.75rem;
+  font-weight: 800;
+}
+
+.action-btn small {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.action-btn-left {
+  background: #e2e8f0;
+}
+
+.action-btn-right {
+  background: #f8fafc;
 }

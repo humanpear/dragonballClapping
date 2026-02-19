@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const playerActionSchema = z.enum(['ATTACK', 'BLOCK', 'CHARGE']);
+export const playerActionSchema = z.enum(['NONE', 'CHARGE', 'BLOCK', 'ATTACK', 'KAMEHAMEHA', 'TELEPORT']);
 export type PlayerAction = z.infer<typeof playerActionSchema>;
 
 export const submitInputSchema = z.object({
@@ -16,7 +16,8 @@ export const turnWindowSchema = z.object({
   turnStartTs: z.number(),
   inputCloseTs: z.number(),
   lockInTs: z.number(),
-  beatDurationMs: z.number()
+  beatDurationMs: z.number(),
+  roundWins: z.object({ p1: z.number().int().nonnegative(), p2: z.number().int().nonnegative() }).optional()
 });
 export type TurnWindow = z.infer<typeof turnWindowSchema>;
 
@@ -27,7 +28,9 @@ export const resolvedEventSchema = z.object({
   delta: z.object({ p1: z.number(), p2: z.number() }),
   kiAfter: z.object({ p1: z.number(), p2: z.number() }),
   hpAfter: z.object({ p1: z.number(), p2: z.number() }),
-  summary: z.string()
+  summary: z.string(),
+  roundWinner: z.enum(['p1', 'p2', 'draw']),
+  roundWins: z.object({ p1: z.number().int().nonnegative(), p2: z.number().int().nonnegative() })
 });
 export type ResolvedEvent = z.infer<typeof resolvedEventSchema>;
 
