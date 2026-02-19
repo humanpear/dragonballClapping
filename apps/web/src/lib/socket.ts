@@ -19,6 +19,8 @@ type SocketLike = {
   emit: (event: string, payload?: unknown) => void;
 };
 
+type PendingEmit = { event: string; payload?: unknown };
+
 declare global {
   interface Window {
     io?: (url: string, options?: { autoConnect?: boolean }) => {
@@ -40,6 +42,16 @@ const handlers: { [K in EventName]: Array<Handler<SocketEventMap[K]>> } = {
 
 let realSocket: ReturnType<NonNullable<Window['io']>> | null = null;
 let scriptLoadingPromise: Promise<void> | null = null;
+const pendingEmits: PendingEmit[] = [];
+
+function flushPendingEmits() {
+  if (!realSocket || pendingEmits.length === 0) return;
+  while (pendingEmits.length > 0) {
+    const queued = pendingEmits.shift();
+    if (!queued) continue;
+    realSocket.emit(queued.event, queued.payload);
+  }
+}
 
 function loadSocketIoScript(): Promise<void> {
   if (window.io) return Promise.resolve();
@@ -99,7 +111,11 @@ async function initializeSocket() {
     }
 
     realSocket = window.io(SOCKET_SERVER_URL, { autoConnect: true });
+    realSocket.on('connect', () => {
+      flushPendingEmits();
+    });
     bindBufferedHandlers();
+    flushPendingEmits();
   } catch (error) {
     console.warn('[socket] running in offline mode:', error);
   }
@@ -122,7 +138,7 @@ export const socket: SocketLike = {
   },
   emit: (event, payload) => {
     if (!realSocket) {
-      console.warn(`[socket] emit skipped before connection: ${event}`);
+      pendingEmits.push({ event, payload });
       return;
     }
 
