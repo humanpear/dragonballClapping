@@ -61,3 +61,32 @@ describe('gameStore submitInput guards', () => {
     expect(useGameStore.getState().selectedInputs.beat2).toBeUndefined();
   });
 });
+
+describe('gameStore startVsCpu', () => {
+  beforeEach(() => {
+    useGameStore.setState({
+      screen: 'lobby',
+      authMode: 'mock',
+      turnIndex: 3,
+      selectedInputs: { turnIndex: 3, beat1: 'ATTACK' },
+      player: { hp: 42, ki: 5 },
+      cpu: { hp: 10, ki: 9 },
+      winner: 'cpu',
+      lastResolved: undefined,
+      turnWindow: undefined
+    });
+    vi.restoreAllMocks();
+  });
+
+  it('moves to battle immediately and requests cpu match start', () => {
+    const emitSpy = vi.spyOn(socket, 'emit').mockImplementation(() => {});
+
+    useGameStore.getState().startVsCpu();
+
+    expect(useGameStore.getState().screen).toBe('battle');
+    expect(useGameStore.getState().player).toEqual({ hp: 100, ki: 0 });
+    expect(useGameStore.getState().cpu).toEqual({ hp: 100, ki: 0 });
+    expect(useGameStore.getState().selectedInputs).toEqual({ turnIndex: 0 });
+    expect(emitSpy).toHaveBeenCalledWith('match:start-vs-cpu');
+  });
+});
