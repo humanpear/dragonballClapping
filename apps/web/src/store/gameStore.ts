@@ -64,7 +64,19 @@ export const useGameStore = create<Store>((set, get) => ({
       screen: 'lobby'
     }),
   logout: () => set({ provider: undefined, authSession: undefined, authMode: 'mock', screen: 'login' }),
-  startVsCpu: () => socket.emit('match:start-vs-cpu'),
+  startVsCpu: () => {
+    set({
+      screen: 'battle',
+      winner: undefined,
+      lastResolved: undefined,
+      turnIndex: 0,
+      turnWindow: undefined,
+      selectedInputs: { turnIndex: 0 },
+      player: { hp: 100, ki: 0 },
+      cpu: { hp: 100, ki: 0 }
+    });
+    socket.emit('match:start-vs-cpu');
+  },
   submitInput: (beat, action) => {
     const { matchId, turnIndex, turnWindow, selectedInputs } = get();
     if (!matchId || !turnWindow) return;
