@@ -19,6 +19,7 @@ describe('gameStore submitInput guards', () => {
       selectedInputs: { turnIndex: 0 },
       player: { hp: 100, ki: 0 },
       cpu: { hp: 100, ki: 0 },
+      roundWins: { p1: 0, p2: 0 },
       matchId: 'm1',
       turnWindow: { ...baseTurnWindow, inputCloseTs: Date.now() + 5_000 }
     });
@@ -72,6 +73,7 @@ describe('gameStore startVsCpu', () => {
       player: { hp: 42, ki: 5 },
       cpu: { hp: 10, ki: 9 },
       winner: 'cpu',
+      roundWins: { p1: 2, p2: 1 },
       lastResolved: undefined,
       turnWindow: undefined
     });

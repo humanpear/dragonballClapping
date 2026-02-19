@@ -1,7 +1,7 @@
 import type { ResolvedEvent, TurnWindow } from '@dragonball/shared';
 
 type MatchStartedPayload = { matchId: string };
-type MatchEndedPayload = { winner: string };
+type MatchEndedPayload = { winner: string; roundWins?: { p1: number; p2: number } };
 
 type SocketEventMap = {
   'match:started': MatchStartedPayload;
@@ -15,6 +15,7 @@ type Handler<T> = (payload: T) => void;
 
 type SocketLike = {
   on: <T extends EventName>(event: T, handler: Handler<SocketEventMap[T]>) => void;
+  off: <T extends EventName>(event: T) => void;
   emit: (event: string, payload?: unknown) => void;
 };
 
@@ -115,6 +116,9 @@ export const socket: SocketLike = {
         handler(payload as SocketEventMap[typeof event]);
       });
     }
+  },
+  off: (event) => {
+    handlers[event] = [];
   },
   emit: (event, payload) => {
     if (!realSocket) {

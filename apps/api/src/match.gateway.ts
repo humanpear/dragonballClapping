@@ -22,6 +22,7 @@ type MatchState = {
   p2Input?: { beat1?: PlayerAction; beat2?: PlayerAction };
   window: ReturnType<typeof createTurnWindow>;
   status: 'running' | 'ended';
+  roundWins: { p1: number; p2: number };
 };
 
 @WebSocketGateway({ cors: { origin: '*' } })
@@ -50,7 +51,8 @@ export class MatchGateway implements OnGatewayConnection, OnGatewayDisconnect {
       p1: { hp: 100, ki: 0 },
       p2: { hp: 100, ki: 0 },
       window: createTurnWindow(0, Date.now()),
-      status: 'running'
+      status: 'running',
+      roundWins: { p1: 0, p2: 0 }
     };
     this.matches.set(matchId, state);
     this.server.to(matchId).emit('match:started', { matchId, gameConfig });
@@ -88,7 +90,7 @@ export class MatchGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (!state || state.status === 'ended') return;
 
     state.window = createTurnWindow(state.turnIndex, Date.now());
-    this.server.to(matchId).emit('match:turn-window', state.window);
+    this.server.to(matchId).emit('match:turn-window', { ...state.window, roundWins: state.roundWins });
 
     setTimeout(async () => {
       const current = this.matches.get(matchId);
@@ -98,28 +100,32 @@ export class MatchGateway implements OnGatewayConnection, OnGatewayDisconnect {
         beat2: createCpuPolicyAction(current.turnIndex + 1)
       };
       current.p1Input = current.p1Input ?? {};
-      const p1b1 = current.p1Input.beat1 ?? 'BLOCK';
-      const p1b2 = current.p1Input.beat2 ?? 'BLOCK';
+      const p1b1 = current.p1Input.beat1 ?? 'NONE';
+      const p1b2 = current.p1Input.beat2 ?? 'NONE';
 
       const resolved = resolveTurn(
         current.turnIndex,
         { beat1: p1b1, beat2: p1b2 },
-        { beat1: current.p2Input.beat1 ?? 'BLOCK', beat2: current.p2Input.beat2 ?? 'BLOCK' },
+        { beat1: current.p2Input.beat1 ?? 'NONE', beat2: current.p2Input.beat2 ?? 'NONE' },
         current.p1,
-        current.p2
+        current.p2,
+        current.roundWins
       );
 
       current.p1 = resolved.p1After;
       current.p2 = resolved.p2After;
+      current.roundWins = resolved.roundWins;
       this.server.to(matchId).emit('match:resolved', resolved.event);
       await this.prisma.safeCreateMatchEvent({ matchId, turnIndex: current.turnIndex, type: 'resolved', payload: resolved.event });
 
-      if (current.p1.hp <= 0 || current.p2.hp <= 0 || current.turnIndex >= 9) {
+      if (current.roundWins.p1 >= 3 || current.roundWins.p2 >= 3 || current.turnIndex >= 11) {
         current.status = 'ended';
         this.server.to(matchId).emit('match:ended', {
-          winner: current.p1.hp === current.p2.hp ? 'draw' : current.p1.hp > current.p2.hp ? 'player' : 'cpu',
+          winner:
+            current.roundWins.p1 === current.roundWins.p2 ? 'draw' : current.roundWins.p1 > current.roundWins.p2 ? 'player' : 'cpu',
           p1: current.p1,
-          p2: current.p2
+          p2: current.p2,
+          roundWins: current.roundWins
         });
         return;
       }
