@@ -1,0 +1,31 @@
+{
+  "name": "dragonball-clapping",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Dragonball Clapping web game monorepo bootstrap",
+  "scripts": {
+    "dev": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "dev:client": "npm --prefix client run dev",
+    "start": "npm run dev",
+    "build": "npm --prefix server run build && npm --prefix client run build",
+    "lint": "npm --prefix server run lint && npm --prefix client run lint",
+    "test": "npm --prefix server run test && npm --prefix client run test",
+    "test:e2e": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/humanpear/dragonballClapping.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/humanpear/dragonballClapping/issues"
+  },
+  "homepage": "https://github.com/humanpear/dragonballClapping#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}
