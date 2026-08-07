@@ -80,19 +80,30 @@
 - `public/images/battle/icons/kamehameha.png`
 - `public/images/battle/icons/teleport.png`
 
-## 4) 추후 추가 예정(현재 없음)
+## 4) Beat1/Beat2 전용 동작 이미지
 
-1. Beat1/Beat2 전용 동작 이미지
+1. 적 캐릭터 본체
 - `public/images/battle/opponent-actions/enemy-beat1.png`
 - `public/images/battle/opponent-actions/enemy-beat2.png`
+
+2. Beat2 적 캐릭터 오른팔 오버레이
+- `public/images/battle/opponent-actions/enemy-beat2-right-arm.png`
+
+3. 플레이어 캐릭터
 - `public/images/battle/player-actions/player-beat1.png`
 - `public/images/battle/player-actions/player-beat2.png`
+
+Beat1은 적 캐릭터 단일 이미지를 사용한다. Beat2의 적 오른팔 오버레이는
+적 캐릭터 본체와 **동일한 이미지 크기와 동일한 투명 캔버스 여백**으로
+제작한다. 오른팔 이외의 영역은 투명해야 한다. Beat2 화면에서는
+`적 본체 → 플레이어 → 적 오른팔` 순서로 겹쳐 표시된다.
 
 ## 5) 비트/판정 규칙 변경 메모
 
 1. 입력은 Beat1~Beat2까지만 허용
 2. Beat2 종료 시 입력 확정/잠금
-3. Beat3은 양측 행동 이미지 표시
-4. Beat4는 상호 판정 결과 표시
-5. Beat4 결과가 무승부면 다음 턴 진행
-6. Beat4 결과에 승패가 나면 상단 승리 반영 후 다음 라운드로 진행
+3. Beat1과 Beat2는 상단 숫자 카운트 대신 각 Beat 전용 캐릭터 이미지 표시
+4. Beat3은 양측 행동 이미지 표시
+5. Beat4는 상호 판정 결과 표시
+6. Beat4 결과가 무승부면 다음 턴 진행
+7. Beat4 결과에 승패가 나면 상단 승리 반영 후 다음 라운드로 진행

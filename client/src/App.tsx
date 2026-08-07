@@ -6,6 +6,7 @@ import {
   ROUND_INTRO_DURATION_MS
 } from "./game/battleState";
 import { getEnabledActionsByEnergy, type Action } from "./game/core";
+import { preloadBattleImages } from "./game/preloadBattleImages";
 import { useIsMobile } from "./hooks/useIsMobile";
 import { BattleScreen } from "./screens/BattleScreen";
 import { LobbyScreen } from "./screens/LobbyScreen";
@@ -34,6 +35,10 @@ function App() {
   const lobbyButtons = isMobile
     ? IMAGE_ASSET_PATHS.lobby.buttonsMobile
     : IMAGE_ASSET_PATHS.lobby.buttonsDesktop;
+
+  useEffect(() => {
+    void preloadBattleImages();
+  }, []);
 
   const trySelectAction = useCallback(
     (action: Action) => {
@@ -140,7 +145,8 @@ function App() {
     [battle.playerEnergy]
   );
 
-  const startVsCpuMatch = useCallback(() => {
+  const startVsCpuMatch = useCallback(async () => {
+    await preloadBattleImages();
     setBattle(createInitialBattleState());
     setScreen("battle");
   }, []);

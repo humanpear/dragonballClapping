@@ -59,11 +59,25 @@ export const IMAGE_ASSET_PATHS = {
       teleport: "/images/battle/icons/teleport.png"
     },
     mobileIconsGroup: "/images/battle/icons/mobile-icons-group.png",
-    plannedBeatPoses: {
+    beatPoses: {
       enemyBeat1: "/images/battle/opponent-actions/enemy-beat1.png",
       enemyBeat2: "/images/battle/opponent-actions/enemy-beat2.png",
+      enemyBeat2RightArm:
+        "/images/battle/opponent-actions/enemy-beat2-right-arm.png",
       playerBeat1: "/images/battle/player-actions/player-beat1.png",
       playerBeat2: "/images/battle/player-actions/player-beat2.png"
     }
   }
 } as const;
+
+export const BATTLE_PRELOAD_IMAGE_PATHS = [
+  IMAGE_ASSET_PATHS.battle.backgroundDesktop,
+  IMAGE_ASSET_PATHS.battle.backgroundMobile,
+  IMAGE_ASSET_PATHS.battle.roundIntroPlate,
+  ...Object.values(IMAGE_ASSET_PATHS.battle.topHud),
+  ...Object.values(IMAGE_ASSET_PATHS.battle.opponentActions),
+  ...Object.values(IMAGE_ASSET_PATHS.battle.playerActions),
+  ...Object.values(IMAGE_ASSET_PATHS.battle.actionIcons),
+  IMAGE_ASSET_PATHS.battle.mobileIconsGroup,
+  ...Object.values(IMAGE_ASSET_PATHS.battle.beatPoses)
+] as const;

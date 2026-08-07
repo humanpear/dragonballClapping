@@ -32,20 +32,16 @@ function slotToImage(slot: SlotState): string {
   return IMAGE_ASSET_PATHS.battle.topHud.resultSlotEmpty;
 }
 
-function beatToImage(beatIndex: BeatIndex): string {
-  if (beatIndex === 1) {
-    return IMAGE_ASSET_PATHS.battle.topHud.beat3;
-  }
-
-  if (beatIndex === 2) {
-    return IMAGE_ASSET_PATHS.battle.topHud.beat2;
-  }
-
+function beatToImage(beatIndex: BeatIndex): string | null {
   if (beatIndex === 3) {
     return IMAGE_ASSET_PATHS.battle.topHud.beat1;
   }
 
-  return IMAGE_ASSET_PATHS.battle.topHud.beatVs;
+  if (beatIndex === 4) {
+    return IMAGE_ASSET_PATHS.battle.topHud.beatVs;
+  }
+
+  return null;
 }
 
 function getTurnResultText(battle: BattleState): string {
@@ -87,15 +83,25 @@ export function BattleScreen({
   enabledActions,
   onSelectAction
 }: BattleScreenProps) {
-  const opponentImage =
-    battle.beatIndex >= 3 && battle.cpuDisplayAction
-      ? IMAGE_ASSET_PATHS.battle.opponentActions[battle.cpuDisplayAction]
-      : IMAGE_ASSET_PATHS.battle.opponentActions.default;
-
-  const playerImage =
-    battle.beatIndex >= 3 && battle.playerDisplayAction
-      ? IMAGE_ASSET_PATHS.battle.playerActions[battle.playerDisplayAction]
-      : IMAGE_ASSET_PATHS.battle.playerActions.ki;
+  const beatImage = beatToImage(battle.beatIndex);
+  const isBeatPose = battle.beatIndex === 1 || battle.beatIndex === 2;
+  const opponentImage = battle.beatIndex === 1
+    ? IMAGE_ASSET_PATHS.battle.beatPoses.enemyBeat1
+    : battle.beatIndex === 2
+      ? IMAGE_ASSET_PATHS.battle.beatPoses.enemyBeat2
+      : battle.cpuDisplayAction
+        ? IMAGE_ASSET_PATHS.battle.opponentActions[battle.cpuDisplayAction]
+        : IMAGE_ASSET_PATHS.battle.opponentActions.default;
+  const opponentRightArmImage = battle.beatIndex === 2
+    ? IMAGE_ASSET_PATHS.battle.beatPoses.enemyBeat2RightArm
+    : null;
+  const playerImage = battle.beatIndex === 1
+    ? IMAGE_ASSET_PATHS.battle.beatPoses.playerBeat1
+    : battle.beatIndex === 2
+      ? IMAGE_ASSET_PATHS.battle.beatPoses.playerBeat2
+      : battle.playerDisplayAction
+        ? IMAGE_ASSET_PATHS.battle.playerActions[battle.playerDisplayAction]
+        : IMAGE_ASSET_PATHS.battle.playerActions.ki;
 
   const turnResultText = getTurnResultText(battle);
 
@@ -115,7 +121,7 @@ export function BattleScreen({
             />
           ))}
         </BattleFrame.ScoreSlots>
-        <BattleFrame.BeatImage src={beatToImage(battle.beatIndex)} alt="" />
+        {beatImage ? <BattleFrame.BeatImage src={beatImage} alt="" /> : <span />}
         <BattleFrame.ScoreSlots>
           {battle.cpuSlots.map((slot, index) => (
             <img
@@ -128,26 +134,51 @@ export function BattleScreen({
         </BattleFrame.ScoreSlots>
       </BattleFrame.Top>
 
-      <BattleFrame.Middle>
+      <BattleFrame.Middle className="pointer-events-none z-0">
         <img
+          key={opponentImage}
           src={opponentImage}
-          alt="opponent action"
+          alt="적 캐릭터"
           className="h-auto w-[65vw] md:w-[50vh]"
+          onError={isBeatPose ? ({ currentTarget }) => {
+            currentTarget.onerror = null;
+            currentTarget.src = IMAGE_ASSET_PATHS.battle.opponentActions.default;
+          } : undefined}
         />
-        {turnResultText ? (
-          <p className="absolute bottom-0 m-0 text-[clamp(1.7rem,5vw,3rem)] font-extrabold tracking-[0.06em] [text-shadow:0_3px_8px_rgba(0,0,0,0.65)]">
-            {turnResultText}
-          </p>
-        ) : null}
       </BattleFrame.Middle>
 
-      <BattleFrame.Bottom className="bottom-[34%] md:bottom-0">
+      <BattleFrame.Bottom className="pointer-events-none z-[1] bottom-[34%] md:bottom-0">
         <img
+          key={playerImage}
           src={playerImage}
-          alt="player action"
+          alt="플레이어 캐릭터"
           className="h-auto w-400 md:w-[55vw]"
+          onError={isBeatPose ? ({ currentTarget }) => {
+            currentTarget.onerror = null;
+            currentTarget.src = IMAGE_ASSET_PATHS.battle.playerActions.ki;
+          } : undefined}
         />
       </BattleFrame.Bottom>
+
+      {opponentRightArmImage ? (
+        <BattleFrame.Middle className="pointer-events-none z-[2]" aria-hidden="true">
+          <img
+            key={opponentRightArmImage}
+            src={opponentRightArmImage}
+            alt=""
+            className="h-auto w-[65vw] md:w-[50vh]"
+            onError={({ currentTarget }) => {
+              currentTarget.hidden = true;
+            }}
+          />
+        </BattleFrame.Middle>
+      ) : null}
+
+      {turnResultText ? (
+        <p className="pointer-events-none absolute inset-x-0 bottom-[34%] z-[3] m-0 text-center text-[clamp(1.7rem,5vw,3rem)] font-extrabold tracking-[0.06em] [text-shadow:0_3px_8px_rgba(0,0,0,0.65)] md:bottom-0">
+          {turnResultText}
+        </p>
+      ) : null}
 
       <BattleFrame.ActionBar side="left" className="hidden md:grid md:ml-[15vw]">
         {LEFT_ACTIONS.map((action) => (

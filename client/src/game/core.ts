@@ -117,8 +117,8 @@ export function decideCpuAction(cpuEnergy: number, playerEnergy: number): Action
 
 export function getBeatDurationForTurn(turn: number): number {
   const normalizedTurn = Math.max(1, Math.trunc(turn));
-  const duration = 160000 - (normalizedTurn - 1) * 50;
-  return Math.max(1000, duration);
+  const duration = 1000 - (normalizedTurn - 1) * 50;
+  return Math.max(300, duration);
 }
 
 export function getEnabledActionsByEnergy(energy: number): Action[] {
