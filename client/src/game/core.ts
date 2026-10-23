@@ -1,3 +1,5 @@
+export { getBeatDurationForTurn } from "../../../shared/timing.js";
+
 export const ACTIONS = ["ki", "attack", "guard", "kamehameha", "teleport"] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -113,12 +115,6 @@ export function decideCpuAction(cpuEnergy: number, playerEnergy: number): Action
   const candidates = getCpuCandidateActions(cpuEnergy, playerEnergy);
   const randomIndex = Math.floor(Math.random() * candidates.length);
   return candidates[randomIndex] ?? candidates[0];
-}
-
-export function getBeatDurationForTurn(turn: number): number {
-  const normalizedTurn = Math.max(1, Math.trunc(turn));
-  const duration = 1000 - (normalizedTurn - 1) * 50;
-  return Math.max(300, duration);
 }
 
 export function getEnabledActionsByEnergy(energy: number): Action[] {

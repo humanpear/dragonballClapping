@@ -1,4 +1,6 @@
 import { TURN_TIMING_RULES, type BeatName } from "./domain.js";
+import { getBeatDurationForTurn } from "../../../shared/timing.js";
+export { getBeatDurationForTurn } from "../../../shared/timing.js";
 
 export type BeatIndex = 1 | 2 | 3 | 4;
 
@@ -16,36 +18,29 @@ const BEAT_NAME_BY_INDEX: Record<BeatIndex, BeatName> = {
   4: "beat4"
 };
 
-export function getBeatDurationForTurn(turn: number): number {
-  const safeTurn = Math.max(1, Math.trunc(turn));
-  const decrease = (safeTurn - 1) * TURN_TIMING_RULES.beatDurationDecayPerTurnMs;
-  const duration = TURN_TIMING_RULES.initialBeatDurationMs - decrease;
-  return Math.max(TURN_TIMING_RULES.minBeatDurationMs, duration);
-}
-
 export function createRoundStartBeatState(): BeatState {
   return {
     turn: 1,
     beatIndex: 1,
     beatName: "beat1",
-    beatDurationMs: TURN_TIMING_RULES.roundResetBeatDurationMs
+    beatDurationMs: getBeatDurationForTurn(1)
   };
 }
 
 export function isInputOpenBeat(state: BeatState): boolean {
-  return state.beatIndex <= 2;
+  return state.beatIndex <= TURN_TIMING_RULES.inputBeats;
 }
 
 export function shouldLockInputAtBeatEnd(state: BeatState): boolean {
-  return state.beatIndex === 2;
+  return state.beatIndex === TURN_TIMING_RULES.inputBeats;
 }
 
 export function isActionRevealBeat(state: BeatState): boolean {
-  return state.beatIndex === 3;
+  return state.beatIndex === TURN_TIMING_RULES.revealBeat;
 }
 
 export function isResultBeat(state: BeatState): boolean {
-  return state.beatIndex === 4;
+  return state.beatIndex === TURN_TIMING_RULES.resultBeat;
 }
 
 export function advanceBeat(state: BeatState): BeatState {
