@@ -1,3 +1,5 @@
+export { TURN_TIMING_RULES } from "../../../shared/timing.js";
+
 export const ACTIONS = ["ki", "attack", "guard", "kamehameha", "teleport"] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -16,14 +18,6 @@ export type BeatName = (typeof BEAT_NAMES)[number];
 export const MATCH_RULES = {
   roundsToWin: 3,
   drawsAllowed: false
-} as const;
-
-export const TURN_TIMING_RULES = {
-  beatsPerTurn: 4,
-  initialBeatDurationMs: 4000,
-  beatDurationDecayPerTurnMs: 50,
-  minBeatDurationMs: 1000,
-  roundResetBeatDurationMs: 4000
 } as const;
 
 export const ENERGY_RULES = {

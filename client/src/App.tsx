@@ -1,10 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { IMAGE_ASSET_PATHS } from "./game/assetPaths";
-import {
-  advanceBattleState,
-  createInitialBattleState,
-  ROUND_INTRO_DURATION_MS
-} from "./game/battleState";
+import { advanceBattleClock, battleTurnKey, createTimedBattle, pauseBattleClock, resumeBattleClock, submitBattleAction, type TimedBattle } from "./game/battleClock";
+import { TURN_TIMING_RULES } from "../../shared/timing.js";
 import { getEnabledActionsByEnergy, type Action } from "./game/core";
 import { preloadBattleImages } from "./game/preloadBattleImages";
 import { useIsMobile } from "./hooks/useIsMobile";
@@ -17,7 +14,10 @@ type Screen = "start" | "lobby" | "battle" | "result";
 
 function App() {
   const [screen, setScreen] = useState<Screen>("start");
-  const [battle, setBattle] = useState(createInitialBattleState);
+  const [battle, setBattle] = useState(() => createTimedBattle(0));
+  const battleRef = useRef(battle);
+  const renderedTurnKey = battleTurnKey(battle);
+  const publish = useCallback((next: TimedBattle) => { battleRef.current = next; setBattle(next); }, []);
   const isMobile = useIsMobile(768);
 
   const sharedBackgroundImage = isMobile
@@ -46,42 +46,26 @@ function App() {
         return;
       }
 
-      setBattle((previousState) => {
-        if (previousState.isRoundIntro || previousState.matchWinner) {
-          return previousState;
-        }
-
-        if (previousState.beatIndex > 2) {
-          return previousState;
-        }
-
-        if (previousState.lockedPlayerAction) {
-          return previousState;
-        }
-
-        return { ...previousState, lockedPlayerAction: action };
-      });
+      publish(submitBattleAction(battleRef.current, action, performance.now(), renderedTurnKey));
     },
-    [screen]
+    [screen, renderedTurnKey, publish]
   );
 
   useEffect(() => {
-    if (screen !== "battle" || battle.matchWinner) {
-      return;
-    }
-
-    const timeoutMs = battle.isRoundIntro
-      ? ROUND_INTRO_DURATION_MS
-      : battle.beatDurationMs;
-
-    const timer = window.setTimeout(() => {
-      setBattle((previousState) => advanceBattleState(previousState));
-    }, timeoutMs);
-
-    return () => {
-      window.clearTimeout(timer);
+    if (screen !== "battle") return;
+    const tick = () => {
+      const next = advanceBattleClock(battleRef.current, performance.now());
+      if (next !== battleRef.current) publish(next);
     };
-  }, [screen, battle]);
+    const timer = window.setInterval(tick, 16);
+    const visibility = () => {
+      const now = performance.now();
+      publish(document.hidden ? pauseBattleClock(battleRef.current, now) : resumeBattleClock(battleRef.current, now));
+    };
+    document.addEventListener("visibilitychange", visibility);
+    if (document.hidden) visibility();
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", visibility); };
+  }, [screen, publish]);
 
   useEffect(() => {
     if (screen !== "battle" || !battle.matchWinner) {
@@ -122,7 +106,7 @@ function App() {
       }
 
       event.preventDefault();
-      trySelectAction(actionByKey);
+      if (!event.repeat) trySelectAction(actionByKey);
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -136,7 +120,8 @@ function App() {
       screen === "battle" &&
       !battle.isRoundIntro &&
       !battle.matchWinner &&
-      battle.beatIndex <= 2,
+      battle.pausedAt === null &&
+      battle.beatIndex <= TURN_TIMING_RULES.inputBeats,
     [screen, battle]
   );
 
@@ -147,14 +132,14 @@ function App() {
 
   const startVsCpuMatch = useCallback(async () => {
     await preloadBattleImages();
-    setBattle(createInitialBattleState());
+    publish(createTimedBattle(performance.now()));
     setScreen("battle");
-  }, []);
+  }, [publish]);
 
   const backToLobby = useCallback(() => {
-    setBattle(createInitialBattleState());
+    publish(createTimedBattle(performance.now()));
     setScreen("lobby");
-  }, []);
+  }, [publish]);
 
   const openPendingMode = useCallback(() => {
     window.alert("준비 중인 모드입니다.");

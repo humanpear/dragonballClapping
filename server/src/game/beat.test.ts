@@ -19,12 +19,12 @@ function moveByBeats(state: BeatState, steps: number): BeatState {
 }
 
 describe("beat orchestrator", () => {
-  it("starts round at beat1 with 4.0s", () => {
+  it("starts round at beat1 with 2.0s", () => {
     const state = createRoundStartBeatState();
     expect(state.turn).toBe(1);
     expect(state.beatIndex).toBe(1);
     expect(state.beatName).toBe("beat1");
-    expect(state.beatDurationMs).toBe(4000);
+    expect(state.beatDurationMs).toBe(2000);
   });
 
   it("keeps beat duration within a turn and decreases each new turn", () => {
@@ -33,20 +33,20 @@ describe("beat orchestrator", () => {
     const afterOneBeat = advanceBeat(start);
     expect(afterOneBeat.turn).toBe(1);
     expect(afterOneBeat.beatIndex).toBe(2);
-    expect(afterOneBeat.beatDurationMs).toBe(4000);
+    expect(afterOneBeat.beatDurationMs).toBe(2000);
 
     const afterOneTurn = moveByBeats(start, 4);
     expect(afterOneTurn.turn).toBe(2);
     expect(afterOneTurn.beatIndex).toBe(1);
-    expect(afterOneTurn.beatDurationMs).toBe(3950);
+    expect(afterOneTurn.beatDurationMs).toBe(1950);
 
     const afterTwoTurns = moveByBeats(start, 8);
     expect(afterTwoTurns.turn).toBe(3);
-    expect(afterTwoTurns.beatDurationMs).toBe(3900);
+    expect(afterTwoTurns.beatDurationMs).toBe(1900);
   });
 
   it("clamps beat duration at minimum 1.0s", () => {
-    expect(getBeatDurationForTurn(61)).toBe(1000);
+    expect(getBeatDurationForTurn(21)).toBe(1000);
     expect(getBeatDurationForTurn(200)).toBe(1000);
   });
 
@@ -54,12 +54,12 @@ describe("beat orchestrator", () => {
     const start = createRoundStartBeatState();
     const deepState = moveByBeats(start, 20); // turn 6 beat 1
     expect(deepState.turn).toBe(6);
-    expect(deepState.beatDurationMs).toBe(3750);
+    expect(deepState.beatDurationMs).toBe(1750);
 
     const reset = createRoundStartBeatState();
     expect(reset.turn).toBe(1);
     expect(reset.beatIndex).toBe(1);
-    expect(reset.beatDurationMs).toBe(4000);
+    expect(reset.beatDurationMs).toBe(2000);
   });
 
   it("marks input window, action reveal, and lock boundary by beat", () => {

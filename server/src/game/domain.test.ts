@@ -15,10 +15,10 @@ import {
 describe("domain constants", () => {
   it("matches the MVP timing contract", () => {
     expect(TURN_TIMING_RULES.beatsPerTurn).toBe(4);
-    expect(TURN_TIMING_RULES.initialBeatDurationMs).toBe(4000);
+    expect(TURN_TIMING_RULES.initialBeatDurationMs).toBe(2000);
     expect(TURN_TIMING_RULES.beatDurationDecayPerTurnMs).toBe(50);
     expect(TURN_TIMING_RULES.minBeatDurationMs).toBe(1000);
-    expect(TURN_TIMING_RULES.roundResetBeatDurationMs).toBe(4000);
+    expect(TURN_TIMING_RULES.roundResetBeatDurationMs).toBe(2000);
     expect(MATCH_RULES.roundsToWin).toBe(3);
     expect(MATCH_RULES.drawsAllowed).toBe(false);
   });
